@@ -1,0 +1,359 @@
+@page
+@model GameCompareModel
+@{
+    ViewData["Title"] = "Game Search";
+    int colSize = 10 / Model.Games?.Count ?? 1;
+}
+
+<h1>Compare games</h1>
+
+@if (ViewData["Success"] != null)
+{
+    <div class="alert alert-success my-2">
+        @ViewData["Success"]
+    </div>
+}
+
+@if (ViewData["Error"] != null)
+{
+    <div class="alert alert-danger my-2">
+        @ViewData["Error"]
+    </div>
+}
+
+
+@if (Model.Games is null || Model.Games.Count == 0)
+{
+    <div class="alert alert-warning my-2">
+        You don't have selected games for comparison. Please go to the <a class="btn btn-primary" href="/">main page</a>
+    </div>
+}
+
+@if (Model.Games is not null && Model.Games.Count < 2)
+{
+    <div class="alert alert-warning my-2">
+        You need to select one more game for comparison. Please go to the <a class="btn btn-primary" href="/">main page</a>
+    </div>
+}
+
+@if (Model.Games != null && Model.Games.Count > 0)
+{
+    <h2>Results:</h2>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th class="col-1"></th>
+                @foreach (var game in Model.Games)
+                {
+                    <th class="col-@colSize">
+                        @game.Name
+                        <form method="post" class="d-inline mx-2">
+                            <input type="hidden" name="id" value="@game.Id" />
+                            <input type="hidden" name="operation" value="Remove" />
+                            <button type="submit" class="btn btn-danger">Remove</button>
+                        </form>
+                    </th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <th>Cover</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Cover is null)
+                        {
+                            <img src="no-image.jpg" class="card-img-top" alt="@game.Name"
+                                style="height: 200px; object-fit: contain;">
+                        }
+                        else
+                        {
+                            <img src="@game.Cover.Url" class="card-img-top" alt="@game.Name"
+                                style="height: 200px; object-fit: contain;">
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Screenshots</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Screenshots is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <div class="flex-row flex-nowrap">
+                                @foreach (var screenshot in game.Screenshots.Take(5))
+                                {
+                                    <img src="@screenshot.Url" alt="@game.Name"
+                                        style="height: 200px; max-width: 200px; object-fit: contain;">
+
+                                }
+                            </div>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Videos</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Videos is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            @foreach (var video in game.Videos.Take(5))
+                            {
+                                <iframe width="280" height="131" src="https://www.youtube.com/embed/@video.VideoId"
+                                    title="YouTube video player" frameborder="0"
+                                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                                    referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+                            }
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Genres</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Genres is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <span>@string.Join(", ", game.Genres.Select(g => g.Name))</span>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Summary</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @game.Summary
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Rating</th>
+                @foreach (var game in Model.Games)
+                {
+                    @if (game.TotalRatingCount > 0)
+                    {
+                        <td>
+                            @game.TotalRating.ToString(".#")/100 (@game.TotalRatingCount)
+                        </td>
+                    }
+                    else
+                    {
+                        <td>
+                            N/A
+                        </td>
+                    }
+                }
+            </tr>
+            <tr>
+                <th>Platforms</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Platforms is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <span>@string.Join(", ", game.Platforms.Select(g => g.Name))</span>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Companies</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.InvolvedCompanies is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <div>
+                                @foreach (var company in game.InvolvedCompanies)
+                                {
+
+                                    List<string> roles = new();
+                                    if (company.IsDeveloper)
+                                        roles.Add("Developer");
+                                    if (company.IsPublisher)
+                                        roles.Add("Publisher");
+                                    string combinedRoles = string.Join(',', roles);
+
+
+                                    <div>
+                                        <b>@company.Company?.Name</b> (@combinedRoles)
+                                        -
+                                        @if (company.Company?.Websites is not null)
+                                        {
+                                            @foreach (var website in company.Company.Websites)
+                                            {
+                                                <a href="@website.Url" target="_blank">@website.Category</a>
+                                            }
+                                        }
+
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Links</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Websites is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <ul>
+                                @foreach (var website in game.Websites.OrderBy(x => x.Category.ToString()))
+                                {
+                                    <li>
+                                        <a href="@website.Url" target="_blank">@website.Category</a>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Release Dates</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.ReleaseDates is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <span>@string.Join(", ", game.ReleaseDates.Select(g => g.Year).OrderBy(x => x))</span>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Age Ratings</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.AgeRatings is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <ul>
+                                @foreach (var ageRating in game.AgeRatings.OrderBy(x => x.Category.ToString()))
+                                {
+                                    <li>
+                                        @ageRating.Category - @ageRating.Rating
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Supported Languages</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.LanguageSupports is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <ul>
+                                @foreach (var language in game.LanguageSupports.OrderBy(x =>
+                               x.Language?.Name).DistinctBy(x => x.Language?.Name))
+                                {
+                                    <li>
+                                        @language.Language?.Name
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Player Perspective</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.PlayerPerspectives is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            @string.Join(", ", game.PlayerPerspectives.OrderBy(x => x.Name).Select(x => x.Name))
+
+                        }
+                    </td>
+                }
+            </tr>
+            <tr>
+                <th>Franchises</th>
+                @foreach (var game in Model.Games)
+                {
+                    <td>
+                        @if (game.Franchises is null)
+                        {
+                            <span>N/A</span>
+                        }
+                        else
+                        {
+                            <ul>
+                                @foreach (var franchise in game.Franchises.OrderBy(x => x.Name))
+                                {
+                                    <li>
+                                        <div class="flex-row align-items-center">
+                                            <b>@franchise.Name</b>
+                                            @if (franchise.Cover is not null)
+                                            {
+                                                <img src="@franchise.Cover.Url" alt="@franchise.Name"
+                                                    style="height: 100px; max-width: 100px; object-fit: contain;">
+                                            }
+                                        </div>
+
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    </td>
+                }
+            </tr>
+        </tbody>
+    </table>
+}

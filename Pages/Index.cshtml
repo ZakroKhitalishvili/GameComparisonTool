@@ -1,0 +1,125 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Game Search";
+}
+
+<h1>Game Search</h1>
+
+<form method="get">
+    <input type="text" name="searchTerm" placeholder="Enter game name" value="@Model.SearchTerm" />
+    <button type="submit">Search</button>
+</form>
+
+<nav aria-label="Page navigation" class="my-2">
+    <ul class="pagination justify-content-center">
+
+        @if (Model.PageNumber > 3)
+        {
+            <li class="page-item">
+                <a class="page-link" asp-route-pageNumber="@(1)" asp-route-searchTerm="@Model.SearchTerm"
+                    aria-label="First">
+                    <span aria-hidden="true">&laquo;&laquo;</span>
+                </a>
+            </li>
+        }
+
+        @if (Model.PageNumber > 1)
+        {
+            <li class="page-item">
+                <a class="page-link" asp-route-pageNumber="@(Model.PageNumber - 1)" asp-route-searchTerm="@Model.SearchTerm"
+                    aria-label="Previous">
+                    <span aria-hidden="true">&laquo;</span>
+                </a>
+            </li>
+        }
+
+        @for (var i = Math.Max(Model.PageNumber - 5, 1); i <= Math.Min(Model.PageNumber + 5, Model.TotalPages); i++)
+        {
+            <li class="page-item @(Model.PageNumber == i ? "active" : "")">
+                <a class="page-link" asp-route-pageNumber="@i" asp-route-searchTerm="@Model.SearchTerm">@i</a>
+            </li>
+        }
+
+        @if (Model.PageNumber < Model.TotalPages)
+        {
+            <li class="page-item">
+                <a class="page-link" asp-route-pageNumber="@(Model.PageNumber + 1)" asp-route-searchTerm="@Model.SearchTerm"
+                    aria-label="Next">
+                    <span aria-hidden="true">&raquo;</span>
+                </a>
+            </li>
+        }
+
+        <li class="page-item @(Model.PageNumber == Model.TotalPages ? "disabled" : "")">
+            <a class="page-link" asp-route-pageNumber="@Model.TotalPages" asp-route-searchTerm="@Model.SearchTerm"
+                aria-label="Last">
+                <span aria-hidden="true">&raquo;&raquo;</span>
+            </a>
+        </li>
+    </ul>
+</nav>
+
+<div class="row mt-5">
+    @if (Model.Games is null || Model.Games.Count == 0)
+    {
+        <h2>Games Not Found</h2>
+    }
+    else
+    {
+        @foreach (var game in Model.Games)
+        {
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    @if (game.Cover is null)
+                    {
+                        <img src="no-image.jpg" class="card-img-top" alt="@game.Name" style="height: 200px; object-fit: contain;">
+                    }
+                    else
+                    {
+                        <img src="@game.Cover.Url" class="card-img-top" alt="@game.Name"
+                            style="height: 200px; object-fit: contain;">
+                    }
+                    <div class="card-body">
+                        <h5 class="card-title">@game.Name</h5>
+                        <p><strong>Genres:</strong>
+                            @if (game.Genres is null)
+                            {
+                                <span>N/A</span>
+                            }
+                            else
+                            {
+                                <span>@string.Join(", ", game.Genres.Select(g => g.Name))</span>
+                            }
+                        </p>
+                        <p><strong>Platforms:</strong>
+                            @if (game.Platforms is null)
+                            {
+                                <span>N/A</span>
+                            }
+                            else
+                            {
+                                <span>@string.Join(", ", game.Platforms.Select(g => g.Name))</span>
+                            }
+                        </p>
+                        <p><strong>Last Release Date:</strong>
+                            @if (game.ReleaseDates is null)
+                            {
+                                <span>N/A</span>
+                            }
+                            else
+                            {
+                                <span>@game.ReleaseDates?.Select(x => x.Year).OrderBy(x => x).LastOrDefault()</span>
+                            }
+                        </p>
+                        <form method="post" target="_blank">
+                            <input type="hidden" name="id" value="@game.Id" />
+                            <input type="hidden" name="operation" value="Compare" />
+                            <button type="submit" class="btn btn-primary">Compare</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
